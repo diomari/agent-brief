@@ -1,7 +1,7 @@
-# pi-agent-brief — Claude Code plugin
+# agent-brief — Claude Code plugin
 
-Adds the `/onboard` slash command to Claude Code. It shells out to the
-`pi-agent-brief` CLI (via `npx`) to generate a compact `PROJECT_CONTEXT.md`, then
+Adds the `/brief` slash command to Claude Code. It shells out to the
+`agent-brief` CLI (via `npx`) to generate or update a compact `PROJECT_CONTEXT.md`, then
 instructs Claude to read it before doing any work.
 
 ## Install
@@ -11,24 +11,24 @@ that includes this repo, or point Claude Code at a local marketplace:
 
 ```bash
 # from a marketplace entry
-/plugin install pi-agent-brief@<marketplace>
+/plugin install agent-brief@<marketplace>
 ```
 
-The `/onboard` command requires the CLI to be runnable. `npx --yes pi-agent-brief …`
+The `/brief` command requires the CLI to be runnable. `npx --yes agent-brief …`
 fetches it from npm on first use; alternatively install it globally:
 
 ```bash
-npm install -g pi-agent-brief
+npm install -g agent-brief
 ```
 
 ## Usage
 
 ```txt
-/onboard
-/onboard --full
-/onboard --task "add login page"
-/onboard --refresh
-/onboard --dry-run
+/brief
+/brief --full
+/brief --task "add login page"
+/brief --update
+/brief --dry-run
 ```
 
 Claude will ask once to allow the `npx` command (declared in `allowed-tools`).

@@ -1,11 +1,11 @@
 {
-  "name": "pi-agent-brief",
+  "name": "agent-brief",
   "version": "1.1.0",
-  "description": "Adds /onboard for generating AI coding agent project context. Works with Pi, Claude Code, and Codex.",
+  "description": "Adds /brief for generating and updating AI coding agent project context. Works with Pi, Claude Code, and Codex.",
   "type": "module",
   "author": "Diomari Madulara",
   "bin": {
-    "pi-agent-brief": "./src/cli.ts"
+    "agent-brief": "./src/cli.ts"
   },
   "engines": {
     "node": ">=22.6.0"

@@ -1,7 +1,7 @@
-// Host-agnostic core for the onboarding brief.
+// Host-agnostic core for the project brief.
 //
 // This module contains all of the project detection and rendering logic plus a
-// single `onboard()` orchestrator. It has no dependency on any coding-agent host
+// single `brief()` orchestrator. It has no dependency on any coding-agent host
 // (Pi, Claude Code, Codex, …) — it only reads the filesystem and returns data.
 // Host adapters live elsewhere: `extensions/brief.ts` (Pi) and `src/cli.ts` (CLI,
 // used by the Claude Code and Codex wrappers).
@@ -10,10 +10,10 @@ import { constants as fsConstants } from "node:fs";
 import { access, mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-export const COMMAND_DESCRIPTION = "Generate or refresh a compact project onboarding context";
+export const COMMAND_DESCRIPTION = "Generate or update a compact project architecture brief";
 
 const DEFAULT_OUTPUT = "PROJECT_CONTEXT.md";
-const CACHE_PATH = path.join(".pi", "onboard.json");
+const CACHE_PATH = path.join(".pi", "brief.json");
 const MAX_READ_BYTES = 100 * 1024;
 const FILE_COUNT_CAP = 5000;
 const MAX_WALK_DEPTH = 8;
@@ -38,7 +38,7 @@ const COUNTABLE_EXTENSIONS = new Set([
 ]);
 
 export type BriefOptions = {
-  refresh: boolean;
+  update: boolean;
   dryRun: boolean;
   full: boolean;
   outputPath: string;
@@ -47,9 +47,9 @@ export type BriefOptions = {
 
 export type NoticeLevel = "info" | "success" | "warning" | "error";
 
-export type OnboardNotice = { level: NoticeLevel; message: string };
+export type BriefNotice = { level: NoticeLevel; message: string };
 
-export type OnboardResult = {
+export type BriefResult = {
   displayPath: string;
   outputPath: string;
   existed: boolean;
@@ -57,7 +57,7 @@ export type OnboardResult = {
   dryRun: boolean;
   lineCount: number;
   kickoff: string;
-  notice: OnboardNotice;
+  notice: BriefNotice;
 };
 
 type PackageJson = {
@@ -122,33 +122,21 @@ type DetectInputs = {
 };
 
 /**
- * Run onboarding for `cwd`. Performs IO (writes the brief and cache unless a dry
- * run / unrefreshed existing file) and returns a host-neutral result describing
- * what happened, a single status notice, and the kickoff prompt to relay.
+ * Generate or update the project brief for `cwd`. Performs IO (writes the brief
+ * and cache unless this is a dry run) and returns a host-neutral result
+ * describing what happened, a single status notice, and the kickoff prompt to
+ * relay. The operation is idempotent: an existing brief is updated in place.
  */
-export async function onboard(cwd: string, options: BriefOptions): Promise<OnboardResult> {
+export async function brief(cwd: string, options: BriefOptions): Promise<BriefResult> {
   const outputPath = resolveSafeOutputPath(cwd, options.outputPath);
   const displayPath = path.relative(cwd, outputPath) || path.basename(outputPath);
   const existed = await pathExists(outputPath);
-
-  if (existed && !options.refresh && !options.dryRun) {
-    return {
-      displayPath,
-      outputPath,
-      existed,
-      wrote: false,
-      dryRun: false,
-      lineCount: 0,
-      kickoff: generateKickoffPrompt(displayPath, options, false),
-      notice: { level: "warning", message: `${displayPath} already exists. Run /onboard --refresh to regenerate.` },
-    };
-  }
 
   const summary = await collectProjectInfo(cwd, options);
   const markdown = generateProjectContext(summary, options);
   const lineCount = markdown.split("\n").length;
 
-  let notice: OnboardNotice;
+  let notice: BriefNotice;
   let wrote = false;
   if (options.dryRun) {
     notice = { level: "info", message: `Dry run: ${options.full ? "full" : "compact"} brief is ${lineCount} lines for ${displayPath}.` };
@@ -157,7 +145,7 @@ export async function onboard(cwd: string, options: BriefOptions): Promise<Onboa
     await writeFile(outputPath, markdown, "utf8");
     await writeCache(cwd, summary);
     wrote = true;
-    notice = { level: "success", message: `${existed ? "Refreshed" : "Generated"} ${displayPath}.` };
+    notice = { level: "success", message: `${existed ? "Updated" : "Generated"} ${displayPath}.` };
   }
 
   return {
@@ -174,7 +162,7 @@ export async function onboard(cwd: string, options: BriefOptions): Promise<Onboa
 
 export function parseArgs(tokens: string[]): BriefOptions {
   const options: BriefOptions = {
-    refresh: false,
+    update: false,
     dryRun: false,
     full: false,
     outputPath: DEFAULT_OUTPUT,
@@ -182,7 +170,7 @@ export function parseArgs(tokens: string[]): BriefOptions {
 
   for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i];
-    if (token === "--refresh") options.refresh = true;
+    if (token === "--update") options.update = true;
     else if (token === "--dry-run") options.dryRun = true;
     else if (token === "--full") options.full = true;
     else if (token === "--output") {
@@ -549,7 +537,7 @@ function renderCompact(summary: ProjectSummary): string {
   const lines: string[] = [
     "# Project Context",
     "",
-    "Generated by `/onboard` (compact). Run `/onboard --full` for a broader brief.",
+    "Generated by `/brief` (compact). Run `/brief --full` for a broader brief. Re-run `/brief` whenever architecture gets stale.",
     "",
     "## Stack",
     ...stackLines(summary.stack, summary.size, summary.fileCount),
@@ -590,7 +578,7 @@ function renderFull(summary: ProjectSummary): string {
   const lines: string[] = [
     "# Project Context",
     "",
-    "Generated by `/onboard --full`.",
+    "Generated by `/brief --full`. Re-run `/brief` whenever architecture gets stale.",
     "",
     "## Stack",
     ...stackLines(summary.stack, summary.size, summary.fileCount),
@@ -729,20 +717,11 @@ async function writeCache(cwd: string, summary: ProjectSummary): Promise<void> {
     await mkdir(path.dirname(cachePath), { recursive: true });
     await writeFile(cachePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
   } catch {
-    // Cache is best-effort; never fail onboarding because of it.
+    // Cache is best-effort; never fail brief generation because of it.
   }
 }
 
 function generateKickoffPrompt(outputPath: string, options: BriefOptions, generated: boolean): string {
-  if (!generated && !options.dryRun) {
-    // Existing file was preserved (no --refresh).
-    let prompt = `${outputPath} already exists and was NOT overwritten.\n\nUse the existing file as the working context for this session:\n1. Read ${outputPath}.\n2. Summarize the current stack and architecture in 5–10 bullets.\n3. Identify the most important files for future changes.\n4. Identify risky areas that should not be touched without explicit approval.\n5. Do not edit files yet unless the user explicitly asked for implementation.\n\nIf the project has changed and the context looks stale, run \`/onboard --refresh\` to regenerate it.`;
-    if (options.task) {
-      prompt += `\n\nTask to prepare for:\n${options.task}\n\nIdentify likely files, risks, unknowns, and the smallest safe plan. Do not edit yet.`;
-    }
-    return prompt;
-  }
-
   const verb = generated ? "Read" : "Read (after generating)";
   let prompt = `${verb} ${outputPath} and use it as the working context for this session.\n\nBefore making any implementation changes:\n1. Summarize the current stack and architecture in 5–10 bullets.\n2. Identify the most important files for future changes.\n3. Identify risky areas that should not be touched without explicit approval.\n4. If a task was provided, identify likely files involved and propose a minimal plan.\n5. Do not edit files yet unless the user explicitly asked for implementation.`;
   if (options.task) {

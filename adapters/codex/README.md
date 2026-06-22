@@ -1,7 +1,7 @@
-# pi-agent-brief — Codex prompt
+# agent-brief — Codex prompt
 
-Adds an `/onboard` custom prompt to Codex CLI. It runs the `pi-agent-brief` CLI to
-generate a compact `PROJECT_CONTEXT.md`, then has Codex read it before doing any work.
+Adds a `/brief` custom prompt to Codex CLI. It runs the `agent-brief` CLI to
+generate or update a compact `PROJECT_CONTEXT.md`, then has Codex read it before doing any work.
 
 ## Install
 
@@ -9,14 +9,14 @@ Copy the prompt into your Codex prompts directory:
 
 ```bash
 mkdir -p ~/.codex/prompts
-cp prompts/onboard.md ~/.codex/prompts/onboard.md
+cp prompts/brief.md ~/.codex/prompts/brief.md
 ```
 
-Make sure the CLI is runnable — `npx --yes pi-agent-brief …` fetches it from npm on first
+Make sure the CLI is runnable — `npx --yes agent-brief …` fetches it from npm on first
 use, or install it globally:
 
 ```bash
-npm install -g pi-agent-brief
+npm install -g agent-brief
 ```
 
 ## Usage
@@ -24,11 +24,11 @@ npm install -g pi-agent-brief
 In Codex, run the prompt and pass any flags as arguments:
 
 ```txt
-/onboard
-/onboard --full
-/onboard --task "add login page"
-/onboard --refresh
-/onboard --dry-run
+/brief
+/brief --full
+/brief --task "add login page"
+/brief --update
+/brief --dry-run
 ```
 
 `$ARGUMENTS` is substituted with whatever you type after the prompt name. Codex will ask

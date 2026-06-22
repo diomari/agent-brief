@@ -1,8 +1,8 @@
 {
-  "name": "pi-agent-brief",
+  "name": "agent-brief",
   "version": "1.1.0",
-  "description": "Adds /onboard to generate a compact PROJECT_CONTEXT.md for the current repo.",
+  "description": "Adds /brief to generate or update a compact PROJECT_CONTEXT.md for the current repo.",
   "author": "Diomari Madulara",
   "license": "MIT",
-  "keywords": ["onboarding", "context", "repo-map", "agent-context"]
+  "keywords": ["brief", "context", "repo-map", "agent-context"]
 }

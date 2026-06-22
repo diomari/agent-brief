@@ -1,25 +1,30 @@
 # Changelog
 
-All notable changes to `pi-agent-brief` are documented here. This project adheres to
+All notable changes to `agent-brief` are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
 ## [1.1.0] - 2026-06-22
 
-Multi-agent support (Scenario A: shared core + thin per-host adapters).
+Multi-agent support (Scenario A: shared core + thin per-host adapters) plus the `/brief`
+command rename.
 
 ### Added
 
-- **Host-agnostic core** (`src/core.ts`) with an `onboard()` orchestrator; all detection
+- **Host-agnostic core** (`src/core.ts`) with a `brief()` orchestrator; all detection
   and rendering logic now lives here, independent of any coding-agent host.
-- **CLI** (`src/cli.ts`, `bin: pi-agent-brief`): runs onboarding anywhere Node runs;
+- **CLI** (`src/cli.ts`, `bin: agent-brief`): runs brief generation anywhere Node runs;
   prints status to stderr and the kickoff prompt to stdout.
-- **Claude Code adapter** (`adapters/claude-code/`): a plugin exposing `/onboard` that
+- **Claude Code adapter** (`adapters/claude-code/`): a plugin exposing `/brief` that
   shells out to the CLI via `npx`.
-- **Codex adapter** (`adapters/codex/`): an `/onboard` custom prompt that runs the CLI.
+- **Codex adapter** (`adapters/codex/`): a `/brief` custom prompt that runs the CLI.
 
 ### Changed
 
 - The Pi extension (`extensions/brief.ts`) is now a thin adapter that delegates to the core.
+- Renamed the package and CLI from `pi-agent-brief` to `agent-brief` for multi-agent support.
+- Renamed the user-facing command from `/onboard` to `/brief`.
+- Added `--update` for regenerating stale architecture context as projects evolve.
+- Made `/brief` idempotent: existing `PROJECT_CONTEXT.md` files are updated in place by default.
 - `engines.node` set to `>=22.6.0` (the CLI runs TypeScript directly; Node 23.6+ needs no
   flags).
 

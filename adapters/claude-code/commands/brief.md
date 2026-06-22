@@ -1,14 +1,14 @@
 ---
-description: Generate or refresh a compact PROJECT_CONTEXT.md for this repo
-argument-hint: "[--full] [--task \"...\"] [--refresh] [--dry-run] [--output PATH]"
+description: Generate or update a compact PROJECT_CONTEXT.md for this repo
+argument-hint: "[--full] [--task \"...\"] [--update] [--dry-run] [--output PATH]"
 allowed-tools: Bash(npx:*), Read
 ---
 
-Generate the onboarding brief for this project by running the generator:
+Generate or update the project brief by running the generator:
 
-!`npx --yes pi-agent-brief onboard $ARGUMENTS`
+!`npx --yes agent-brief brief $ARGUMENTS`
 
-The command above scanned the project and — unless `--dry-run` was passed — wrote
+The command above scanned the project and — unless `--dry-run` was passed — wrote or updated
 `PROJECT_CONTEXT.md`. Its stdout above is a kickoff prompt.
 
 Now, using that file as your working context:

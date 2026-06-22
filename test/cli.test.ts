@@ -23,7 +23,7 @@ async function cli(cwd: string, args: string[]): Promise<CliRun> {
 }
 
 async function fixture(): Promise<string> {
-  const dir = await mkdtemp(path.join(tmpdir(), "onboard-cli-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "brief-cli-"));
   await writeFile(
     path.join(dir, "package.json"),
     JSON.stringify({ name: "demo", scripts: { dev: "vite", test: "vitest" }, dependencies: { vite: "^5" } }),
@@ -36,7 +36,7 @@ async function fixture(): Promise<string> {
 test("CLI writes the brief and prints the kickoff to stdout", async () => {
   const dir = await fixture();
   try {
-    const r = await cli(dir, ["onboard"]);
+    const r = await cli(dir, ["brief"]);
     assert.equal(r.code, 0);
     assert.match(r.stderr, /Generated PROJECT_CONTEXT\.md/);
     assert.match(r.stdout, /working context for this session/);

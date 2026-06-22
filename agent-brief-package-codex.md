@@ -11,7 +11,7 @@ The command should prepare an existing codebase for AI-assisted development by g
 Package name suggestion:
 
 ```txt
-pi-agent-brief
+agent-brief
 ```
 
 Command:
@@ -84,7 +84,7 @@ Reason:
 The package should include:
 
 ```txt
-pi-agent-brief/
+agent-brief/
   package.json
   README.md
   LICENSE
@@ -123,7 +123,7 @@ Should:
 Support these simple arguments initially:
 
 ```txt
-/brief --refresh
+/brief --update
 /brief --task "add login page"
 /brief --dry-run
 /brief --output .pi/PROJECT_CONTEXT.md
@@ -131,7 +131,7 @@ Support these simple arguments initially:
 
 Behavior:
 
-- `--refresh`: overwrite/update existing brief.
+- `--update`: overwrite/update existing brief when architecture context is stale.
 - `--task "..."`: include a task-specific section asking the agent to identify likely files and risks for that task.
 - `--dry-run`: show summary in Pi UI and send prompt, but do not write files.
 - `--output <path>`: write the generated brief to a custom path.
@@ -373,7 +373,7 @@ Create:
 
 ```json
 {
-  "name": "pi-agent-brief",
+  "name": "agent-brief",
   "version": "0.1.0",
   "description": "A Pi package that adds /brief for generating AI coding agent project context.",
   "type": "module",
@@ -475,7 +475,7 @@ Support:
 
 ```txt
 /brief
-/brief --refresh
+/brief --update
 /brief --dry-run
 /brief --output .pi/PROJECT_CONTEXT.md
 /brief --task "add login page"
@@ -497,13 +497,13 @@ The command must:
 - Limit file reads by size. Default max file read: 100 KB per file.
 - Keep generated markdown concise.
 - Avoid embedding full source files in `PROJECT_CONTEXT.md`.
-- Avoid overwriting a manually edited `PROJECT_CONTEXT.md` unless `--refresh` is passed, or ask/notify clearly.
+- Avoid overwriting a manually edited `PROJECT_CONTEXT.md` unless `--update` is passed, or ask/notify clearly.
 
-For MVP, if `PROJECT_CONTEXT.md` exists and `--refresh` is not provided:
+For MVP, if `PROJECT_CONTEXT.md` exists and `--update` is not provided:
 
 - Do not overwrite it.
 - Send a prompt telling the agent to read the existing file.
-- Notify user to run `/brief --refresh` to regenerate.
+- Notify user to run `/brief --update` to regenerate.
 
 ---
 
@@ -540,14 +540,14 @@ This lets users still run a prompt command if the extension command fails or is 
 Create a clear README with:
 
 ```md
-# pi-agent-brief
+# agent-brief
 
-Adds `/brief` to Pi Agent.
+Adds `/brief` to Pi Agent and other coding agents.
 
 ## Install
 
 ```bash
-pi install npm:pi-agent-brief
+pi install npm:agent-brief
 ```
 
 Local development:
@@ -559,14 +559,14 @@ pi -e ./extensions/brief.ts
 Or install local package:
 
 ```bash
-pi install ./path/to/pi-agent-brief
+pi install ./path/to/agent-brief
 ```
 
 ## Usage
 
 ```txt
 /brief
-/brief --refresh
+/brief --update
 /brief --task "add login page"
 /brief --dry-run
 /brief --output .pi/PROJECT_CONTEXT.md
@@ -594,7 +594,7 @@ Codex should finish when all are true:
 2. `extensions/brief.ts` registers `/brief` using `pi.registerCommand()`.
 3. `/brief` generates `PROJECT_CONTEXT.md` in the current repo.
 4. `/brief --dry-run` does not write files.
-5. `/brief --refresh` overwrites/regenerates existing output.
+5. `/brief --update` overwrites/regenerates existing output.
 6. `/brief --task "..."` includes task preparation in the kickoff prompt.
 7. The implementation skips sensitive/generated directories.
 8. The implementation avoids reading `.env` files.
@@ -616,7 +616,7 @@ Then run inside Pi:
 ```txt
 /brief --dry-run
 /brief
-/brief --refresh
+/brief --update
 /brief --task "add a settings page"
 ```
 
@@ -624,7 +624,7 @@ Check:
 
 - Command appears in slash command completion.
 - `PROJECT_CONTEXT.md` is created.
-- Existing file is not overwritten unless `--refresh` is used.
+- Existing file is not overwritten unless `--update` is used.
 - Kickoff prompt is sent to the model.
 - Secrets are not read or printed.
 
@@ -699,7 +699,7 @@ Avoid:
 Use this exact prompt in Codex after opening the target package repository:
 
 ```txt
-Build the Pi package described in pi-brief-package-codex.md.
+Build the agent-brief package described in agent-brief-package-codex.md.
 
 Follow the Pi package guide conventions:
 - package.json with `pi` manifest

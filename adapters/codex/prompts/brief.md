@@ -1,13 +1,13 @@
-Generate a compact onboarding brief for this project, then use it as working context.
+Generate or update a compact project brief, then use it as working context.
 
 1. Run this command in the project root, passing through any flags the user provided
-   (for example `--full`, `--task "..."`, `--refresh`, `--dry-run`, `--output PATH`):
+   (for example `--full`, `--task "..."`, `--update`, `--dry-run`, `--output PATH`):
 
    ```bash
-   npx --yes pi-agent-brief onboard $ARGUMENTS
+   npx --yes agent-brief brief $ARGUMENTS
    ```
 
-2. Unless `--dry-run` was used, the command wrote `PROJECT_CONTEXT.md`. Read that file.
+2. Unless `--dry-run` was used, the command wrote or updated `PROJECT_CONTEXT.md`. Read that file.
 3. Summarize the current stack and architecture in 5–10 bullets.
 4. Identify the most important files for future changes.
 5. Identify risky areas that should not be touched without explicit approval.

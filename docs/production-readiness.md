@@ -1,4 +1,4 @@
-# Production Readiness Plan: `pi-agent-brief`
+# Production Readiness Plan: `agent-brief`
 
 A checklist-driven plan for double-checking the existing package and getting it to a
 confident `1.0.0` (or first public) release. Each item states **what to verify**, **how**,
@@ -12,23 +12,23 @@ Status legend: ✅ done / verified · ⚠️ needs work before release · ❌ mi
 > remaining items are external: filling `repository`/`homepage`/`bugs` once the GitHub repo
 > exists, and running the publish procedure.
 
-Current snapshot: `pi-agent-brief@1.0.0` — a Pi package registering `/onboard`, which
-generates a compact `PROJECT_CONTEXT.md` (plus `--full`, `--task`, `--refresh`, `--dry-run`,
-`--output`) and a `.pi/onboard.json` cache. Consumed by Pi **as source** — no build step.
+Current snapshot: `agent-brief@1.1.0` — a package registering `/brief`, which
+generates or updates a compact `PROJECT_CONTEXT.md` (plus `--full`, `--task`, `--update`, `--dry-run`,
+`--output`) and a `.pi/brief.json` cache. Consumed by Pi **as source** — no build step.
 
 ---
 
 ## 1. Functionality & correctness
 
-- [ ] **All flags behave as documented.** Verify `/onboard`, `--full`, `--refresh`,
+- [ ] **All flags behave as documented.** Verify `/brief`, `--full`, `--update`,
   `--task`, `--dry-run`, `--output`.
   How: load the extension with a fake Pi/ctx (or run inside Pi) against 2–3 fixture repos.
   Status: ✅ verified via harness — compact 64 lines, full 75, task adds `Task Lens` (+6),
   tiny repo 44 lines, dry-run reports line count and writes nothing.
-- [ ] **`--dry-run` writes nothing** (neither `PROJECT_CONTEXT.md` nor `.pi/onboard.json`).
+- [ ] **`--dry-run` writes nothing** (neither `PROJECT_CONTEXT.md` nor `.pi/brief.json`).
   Status: ✅ (cache + file writes are gated behind the non-dry-run branch).
-- [ ] **`--refresh` regenerates; without it an existing file is preserved** and the kickoff
-  prompt says so. Status: ✅ verified ("NOT overwritten" prompt path).
+- [ ] **Default `/brief` is idempotent.** Existing `PROJECT_CONTEXT.md` is updated in place
+  (no duplicate brief files); `--update` remains an explicit form of the same behavior.
 - [ ] **`--output` stays inside the project** (path traversal rejected).
   Status: ✅ `resolveSafeOutputPath` rejects escapes and NUL bytes — add an explicit
   regression check for `../outside` and absolute paths.
@@ -65,8 +65,8 @@ generates a compact `PROJECT_CONTEXT.md` (plus `--full`, `--task`, `--refresh`, 
   How: `npm pack --dry-run`. Status: ✅ added
   `"files": ["extensions", "prompts", "README.md", "LICENSE"]`; pack now ships only those
   five files (verified).
-- [ ] **Name availability / scope decided.** How: `npm view pi-agent-brief`.
-  Status: ⚠️ confirm the unscoped name is free, else move to `@org/pi-agent-brief`.
+- [ ] **Name availability / scope decided.** How: `npm view agent-brief`.
+  Status: ⚠️ confirm the unscoped name is free, else move to `@org/agent-brief`.
 - [ ] **`repository`, `homepage`, `bugs`, `author` set.** Status: ⚠️ `author` set
   (Diomari Madulara); `repository`/`homepage`/`bugs` deferred until the GitHub repo exists
   (noted in `CHANGELOG.md`).
@@ -80,7 +80,7 @@ generates a compact `PROJECT_CONTEXT.md` (plus `--full`, `--task`, `--refresh`, 
 
 - [ ] **README covers install, all flags, output, and safety.** Status: ✅ updated for
   compact default, `--full`, Task Lens, cache, overwrite behavior.
-- [ ] **Install command matches reality** (`pi install npm:pi-agent-brief`). Status: ⚠️
+- [ ] **Install command matches reality** (`pi install npm:agent-brief`). Status: ⚠️
   verify against the published package after first publish.
 - [x] **CHANGELOG.** Status: ✅ `CHANGELOG.md` added with the `1.0.0` entry.
 - [x] **LICENSE complete.** Status: ✅ `Copyright (c) 2026 Diomari Madulara`.
@@ -96,7 +96,7 @@ generates a compact `PROJECT_CONTEXT.md` (plus `--full`, `--task`, `--refresh`, 
 
 ## 7. Automated tests
 
-- [x] **Test suite exists and runs in CI.** Status: ✅ `test/onboard.test.ts` (`node --test`,
+- [x] **Test suite exists and runs in CI.** Status: ✅ `test/brief.test.ts` (`node --test`,
   11 tests, all passing) covers each flag, line-budget bounds, `.env` exclusion, unknowns
   grouping, path-traversal rejection, dry-run no-write, and missing/malformed `package.json`.
 
@@ -122,7 +122,7 @@ generates a compact `PROJECT_CONTEXT.md` (plus `--full`, `--task`, `--refresh`, 
 Once the blocking items are clear, follow `README.md` / the publishing guide:
 `npm pack --dry-run` → `npm login` → local tarball smoke test
 (`pi install ./*.tgz`) → `npm publish` (`--access public` if scoped) →
-`pi install npm:pi-agent-brief` to verify the live package.
+`pi install npm:agent-brief` to verify the live package.
 
 ## Sign-off criteria
 
