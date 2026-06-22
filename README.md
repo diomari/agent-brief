@@ -1,8 +1,12 @@
 # pi-agent-brief
 
-A Pi package that adds `/onboard` for generating a compact AI coding agent project context file.
+Adds `/onboard` for generating a compact AI coding agent project context file. Works with
+**Pi**, **Claude Code**, and **Codex** — all three share one host-agnostic core
+(`src/core.ts`) and produce the identical `PROJECT_CONTEXT.md`.
 
 ## Install
+
+### Pi
 
 From this package directory:
 
@@ -15,6 +19,27 @@ Or run the extension directly while developing:
 ```bash
 pi -e ./extensions/brief.ts
 ```
+
+### Claude Code
+
+Install the plugin in `adapters/claude-code/` (see its README). It exposes `/onboard`,
+which shells out to the `pi-agent-brief` CLI.
+
+### Codex
+
+Copy `adapters/codex/prompts/onboard.md` into `~/.codex/prompts/` (see its README).
+
+### CLI (any agent or terminal)
+
+```bash
+npx --yes pi-agent-brief onboard --full
+# or install globally
+npm install -g pi-agent-brief
+```
+
+The CLI is the shared entrypoint the Claude Code and Codex adapters call. It prints status
+to stderr and the kickoff prompt to stdout. Requires Node 22.6+ (23.6+ runs the TypeScript
+CLI with no flags).
 
 ## Usage
 
@@ -66,8 +91,12 @@ preserved and the prompt tells the agent to read it (and how to regenerate).
 
 ## Included resources
 
-- `extensions/brief.ts` — slash command implementation
-- `prompts/brief.md` — fallback prompt template
+- `src/core.ts` — host-agnostic detection + rendering core (the `onboard()` orchestrator)
+- `src/cli.ts` — CLI entrypoint (`pi-agent-brief` bin)
+- `extensions/brief.ts` — Pi adapter (thin wrapper over the core)
+- `prompts/brief.md` — Pi fallback prompt template
+- `adapters/claude-code/` — Claude Code plugin (`/onboard` slash command)
+- `adapters/codex/` — Codex `/onboard` custom prompt
 
 ## Development
 

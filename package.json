@@ -1,9 +1,15 @@
 {
   "name": "pi-agent-brief",
-  "version": "1.0.0",
-  "description": "A Pi package that adds /onboard for generating AI coding agent project context.",
+  "version": "1.1.0",
+  "description": "Adds /onboard for generating AI coding agent project context. Works with Pi, Claude Code, and Codex.",
   "type": "module",
   "author": "Diomari Madulara",
+  "bin": {
+    "pi-agent-brief": "./src/cli.ts"
+  },
+  "engines": {
+    "node": ">=22.6.0"
+  },
   "keywords": [
     "pi-package",
     "pi",
@@ -14,8 +20,10 @@
   ],
   "license": "MIT",
   "files": [
+    "src",
     "extensions",
     "prompts",
+    "adapters",
     "README.md",
     "LICENSE"
   ],

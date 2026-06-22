@@ -3,6 +3,31 @@
 All notable changes to `pi-agent-brief` are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-06-22
+
+Multi-agent support (Scenario A: shared core + thin per-host adapters).
+
+### Added
+
+- **Host-agnostic core** (`src/core.ts`) with an `onboard()` orchestrator; all detection
+  and rendering logic now lives here, independent of any coding-agent host.
+- **CLI** (`src/cli.ts`, `bin: pi-agent-brief`): runs onboarding anywhere Node runs;
+  prints status to stderr and the kickoff prompt to stdout.
+- **Claude Code adapter** (`adapters/claude-code/`): a plugin exposing `/onboard` that
+  shells out to the CLI via `npx`.
+- **Codex adapter** (`adapters/codex/`): an `/onboard` custom prompt that runs the CLI.
+
+### Changed
+
+- The Pi extension (`extensions/brief.ts`) is now a thin adapter that delegates to the core.
+- `engines.node` set to `>=22.6.0` (the CLI runs TypeScript directly; Node 23.6+ needs no
+  flags).
+
+### Notes
+
+- No new runtime dependencies; the same `PROJECT_CONTEXT.md` and safety guarantees apply
+  across all three hosts.
+
 ## [1.0.0] - 2026-06-22
 
 First stable release.
