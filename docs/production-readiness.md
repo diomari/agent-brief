@@ -67,9 +67,8 @@ generates or updates a compact `PROJECT_CONTEXT.md` (plus `--full`, `--task`, `-
   five files (verified).
 - [ ] **Name availability / scope decided.** How: `npm view agent-brief`.
   Status: ⚠️ confirm the unscoped name is free, else move to `@org/agent-brief`.
-- [ ] **`repository`, `homepage`, `bugs`, `author` set.** Status: ⚠️ `author` set
-  (Diomari Madulara); `repository`/`homepage`/`bugs` deferred until the GitHub repo exists
-  (noted in `CHANGELOG.md`).
+- [x] **`repository`, `homepage`, `bugs`, `author` set.** Status: ✅ metadata points to
+  `https://github.com/diomari/agent-brief` and author is Diomari Madulara.
 - [ ] **`peerDependencies` correct** (`@earendil-works/pi-coding-agent`). Status: ✅
   Consider pinning a minimum version (`">=x.y"`) instead of `"*"` once a baseline is known.
 - [ ] **`pi.extensions` / `pi.prompts` point at shipped paths.** Status: ✅ both included by
@@ -107,8 +106,8 @@ generates or updates a compact `PROJECT_CONTEXT.md` (plus `--full`, `--task`, `-
 1. ✅ `files` whitelist added (stops shipping internal docs). _(§4)_
 2. ✅ Copyright holder added to `LICENSE`. _(§5)_
 3. ✅ Automated test suite + CI running typecheck and tests. _(§6, §7)_
-4. ◐ First git commit done. **Remaining:** create the GitHub remote, push, then fill
-   `repository`/`homepage`/`bugs`. _(§4, §6)_
+4. ✅ GitHub repository URL filled in package metadata. **Remaining:** push the local repo to
+   `https://github.com/diomari/agent-brief`. _(§4, §6)_
 
 ## Should-fix (non-blocking, recommended)
 
@@ -127,5 +126,5 @@ Once the blocking items are clear, follow `README.md` / the publishing guide:
 ## Sign-off criteria
 
 Ready to publish when: typecheck + test suite pass in CI · `npm pack --dry-run` shows only
-`extensions/`, `prompts/`, `README.md`, `LICENSE`, `package.json` · LICENSE and metadata
-complete · `--dry-run` proven to write nothing · `.env` exclusion proven by test.
+expected package files · LICENSE and metadata complete · `--dry-run` proven to write nothing ·
+`.env` exclusion proven by test.

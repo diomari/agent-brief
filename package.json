@@ -4,6 +4,14 @@
   "description": "Adds /brief for generating and updating AI coding agent project context. Works with Pi, Claude Code, and Codex.",
   "type": "module",
   "author": "Diomari Madulara",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diomari/agent-brief.git"
+  },
+  "homepage": "https://github.com/diomari/agent-brief#readme",
+  "bugs": {
+    "url": "https://github.com/diomari/agent-brief/issues"
+  },
   "bin": {
     "agent-brief": "./src/cli.ts"
   },

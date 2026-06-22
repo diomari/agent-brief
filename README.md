@@ -2,6 +2,8 @@
 
 **A tiny, reusable project briefing layer for AI coding agents.**
 
+Repository: <https://github.com/diomari/agent-brief>
+
 `agent-brief` gives Pi, Claude Code, Codex, and terminal workflows the same `/brief` command. It scans a repository, writes a compact `PROJECT_CONTEXT.md`, and sends the agent a kickoff prompt that says: read the brief first, understand the architecture, identify risk areas, then plan before editing.
 
 It is not another memory database, vector index, or agent framework. It is the missing lightweight handoff file between a changing codebase and whichever coding agent you open next.

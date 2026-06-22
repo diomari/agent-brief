@@ -25,6 +25,7 @@ command rename.
 - Renamed the user-facing command from `/onboard` to `/brief`.
 - Added `--update` for regenerating stale architecture context as projects evolve.
 - Made `/brief` idempotent: existing `PROJECT_CONTEXT.md` files are updated in place by default.
+- Added repository, homepage, and issues metadata for `https://github.com/diomari/agent-brief`.
 - `engines.node` set to `>=22.6.0` (the CLI runs TypeScript directly; Node 23.6+ needs no
   flags).
 
