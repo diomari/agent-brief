@@ -3,6 +3,23 @@
 All notable changes to `brief-ctx` are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-06-22
+
+Agent handoff and publishing polish.
+
+### Added
+
+- Project-type, package identity, Pi gallery, package publishing, generated-by identity, stale-context change hints, and agent-switching signals in generated briefs.
+- CLI install helpers for Pi, Claude Code, Codex, Cursor, Windsurf, and all hosts.
+- CLI export helpers for `AGENTS.md`, Cursor rules, Windsurf rules, and generic prompts.
+- Pi package gallery preview image metadata.
+
+### Changed
+
+- Repositioned README around Brief as the missing handoff tool for AI coding agents.
+- Improved package/tool repo maps, key-file scoring, task routing, and auth risk precision.
+- Renamed package metadata and documentation to `brief-ctx`.
+
 ## [1.1.0] - 2026-06-22
 
 Multi-agent support (Scenario A: shared core + thin per-host adapters) plus the `/brief`
@@ -17,9 +34,6 @@ command rename.
 - **Claude Code adapter** (`adapters/claude-code/`): a plugin exposing `/brief` that
   shells out to the CLI via `npx`.
 - **Codex adapter** (`adapters/codex/`): a `/brief` custom prompt that runs the CLI.
-- Project-type, package identity, Pi gallery, package publishing, generated-by identity, stale-context change hints, and agent-switching signals in generated briefs.
-- CLI install helpers for Pi, Claude Code, Codex, Cursor, Windsurf, and all hosts.
-- CLI export helpers for `AGENTS.md`, Cursor rules, Windsurf rules, and generic prompts.
 
 ### Changed
 
@@ -29,7 +43,6 @@ command rename.
 - Added `--update` for regenerating stale architecture context as projects evolve.
 - Made `/brief` idempotent: existing `PROJECT_CONTEXT.md` files are updated in place by default.
 - Added repository, homepage, and issues metadata for `https://github.com/diomari/brief-ctx`.
-- Improved package/tool repo maps, key-file scoring, task routing, and auth risk precision.
 - `engines.node` set to `>=22.6.0` (the CLI runs TypeScript directly; Node 23.6+ needs no
   flags).
 

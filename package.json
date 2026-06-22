@@ -1,6 +1,6 @@
 {
   "name": "brief-ctx",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Adds /brief for generating and updating AI coding agent project context. Works with Pi, Claude Code, and Codex.",
   "type": "module",
   "author": "Diomari Madulara",

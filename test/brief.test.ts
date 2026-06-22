@@ -217,7 +217,7 @@ test("package/tool repos get useful project type, map, gallery, and switching co
     path.join(dir, "package.json"),
     JSON.stringify({
       name: "brief-ctx",
-      version: "1.1.0",
+      version: "1.2.0",
       author: "Someone With Auth In Field Name",
       bin: { "brief-ctx": "./src/cli.ts" },
       keywords: ["pi-package"],
@@ -237,7 +237,7 @@ test("package/tool repos get useful project type, map, gallery, and switching co
   try {
     const r = await run(dir, "");
     assert.match(r.content!, /Project type: Pi package, CLI tool, multi-agent adapter package/);
-    assert.match(r.content!, /Package: brief-ctx@1\.1\.0/);
+    assert.match(r.content!, /Package: brief-ctx@1\.2\.0/);
     assert.match(r.content!, /Pi gallery: pi-package keyword, preview image configured/);
     assert.match(r.content!, /Package check: npm pack --dry-run/);
     assert.match(r.content!, /Pi extension: extensions\//);
