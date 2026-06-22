@@ -71,6 +71,48 @@ test("CLI --help prints usage and exits 0", async () => {
   }
 });
 
+test("CLI install helper prints agent-specific setup", async () => {
+  const dir = await fixture();
+  try {
+    const r = await cli(dir, ["install", "all"]);
+    assert.equal(r.code, 0);
+    assert.match(r.stdout, /pi install npm:brief-ctx/);
+    assert.match(r.stdout, /Claude Code/);
+    assert.match(r.stdout, /~\/\.codex\/prompts/);
+    assert.match(r.stdout, /brief-ctx export cursor/);
+    assert.match(r.stdout, /brief-ctx export windsurf/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("CLI export helper prints portable agent rules", async () => {
+  const dir = await fixture();
+  try {
+    const r = await cli(dir, ["export", "agents-md"]);
+    assert.equal(r.code, 0);
+    assert.match(r.stdout, /# Agent Instructions/);
+    assert.match(r.stdout, /Read `PROJECT_CONTEXT\.md`/);
+    assert.match(r.stdout, /brief-ctx brief/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("CLI reports unknown install/export targets", async () => {
+  const dir = await fixture();
+  try {
+    const install = await cli(dir, ["install", "nope"]);
+    assert.equal(install.code, 1);
+    assert.match(install.stderr, /Unknown install target/);
+    const exported = await cli(dir, ["export", "nope"]);
+    assert.equal(exported.code, 1);
+    assert.match(exported.stderr, /Unknown export target/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("CLI reports unknown flags with a non-zero exit", async () => {
   const dir = await fixture();
   try {

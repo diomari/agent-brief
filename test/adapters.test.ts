@@ -8,7 +8,7 @@ const read = (rel: string) => readFile(fileURLToPath(new URL(rel, root)), "utf8"
 
 test("Claude Code plugin.json is valid and names the package", async () => {
   const plugin = JSON.parse(await read("adapters/claude-code/.claude-plugin/plugin.json"));
-  assert.equal(plugin.name, "agent-brief");
+  assert.equal(plugin.name, "brief-ctx");
   assert.ok(plugin.version, "plugin should declare a version");
   assert.ok(plugin.description, "plugin should declare a description");
 });
@@ -17,12 +17,12 @@ test("Claude Code command runs the CLI and has valid frontmatter", async () => {
   const md = await read("adapters/claude-code/commands/brief.md");
   assert.match(md, /^---\n[\s\S]*?\n---/, "command should start with YAML frontmatter");
   assert.match(md, /allowed-tools:.*Bash/, "command must allow the Bash tool");
-  assert.match(md, /agent-brief brief \$ARGUMENTS/, "command must invoke the CLI with args");
+  assert.match(md, /brief-ctx brief \$ARGUMENTS/, "command must invoke the CLI with args");
   assert.match(md, /Read `PROJECT_CONTEXT\.md`/);
 });
 
 test("Codex prompt runs the CLI and reads the output", async () => {
   const md = await read("adapters/codex/prompts/brief.md");
-  assert.match(md, /agent-brief brief \$ARGUMENTS/, "prompt must invoke the CLI with args");
+  assert.match(md, /brief-ctx brief \$ARGUMENTS/, "prompt must invoke the CLI with args");
   assert.match(md, /PROJECT_CONTEXT\.md/);
 });

@@ -11,7 +11,7 @@ The command should prepare an existing codebase for AI-assisted development by g
 Package name suggestion:
 
 ```txt
-agent-brief
+brief-ctx
 ```
 
 Command:
@@ -84,7 +84,7 @@ Reason:
 The package should include:
 
 ```txt
-agent-brief/
+brief-ctx/
   package.json
   README.md
   LICENSE
@@ -373,7 +373,7 @@ Create:
 
 ```json
 {
-  "name": "agent-brief",
+  "name": "brief-ctx",
   "version": "0.1.0",
   "description": "A Pi package that adds /brief for generating AI coding agent project context.",
   "type": "module",
@@ -540,14 +540,14 @@ This lets users still run a prompt command if the extension command fails or is 
 Create a clear README with:
 
 ```md
-# agent-brief
+# brief-ctx
 
 Adds `/brief` to Pi Agent and other coding agents.
 
 ## Install
 
 ```bash
-pi install npm:agent-brief
+pi install npm:brief-ctx
 ```
 
 Local development:
@@ -559,7 +559,7 @@ pi -e ./extensions/brief.ts
 Or install local package:
 
 ```bash
-pi install ./path/to/agent-brief
+pi install ./path/to/brief-ctx
 ```
 
 ## Usage
@@ -699,7 +699,7 @@ Avoid:
 Use this exact prompt in Codex after opening the target package repository:
 
 ```txt
-Build the agent-brief package described in agent-brief-package-codex.md.
+Build the brief-ctx package described in brief-ctx-package-codex.md.
 
 Follow the Pi package guide conventions:
 - package.json with `pi` manifest

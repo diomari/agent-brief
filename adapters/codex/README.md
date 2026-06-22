@@ -1,6 +1,6 @@
-# agent-brief — Codex prompt
+# brief-ctx — Codex prompt
 
-Adds a `/brief` custom prompt to Codex CLI. It runs the `agent-brief` CLI to
+Adds a `/brief` custom prompt to Codex CLI. It runs the `brief-ctx` CLI to
 generate or update a compact `PROJECT_CONTEXT.md`, then has Codex read it before doing any work.
 
 ## Install
@@ -12,11 +12,11 @@ mkdir -p ~/.codex/prompts
 cp prompts/brief.md ~/.codex/prompts/brief.md
 ```
 
-Make sure the CLI is runnable — `npx --yes agent-brief …` fetches it from npm on first
+Make sure the CLI is runnable — `npx --yes brief-ctx …` fetches it from npm on first
 use, or install it globally:
 
 ```bash
-npm install -g agent-brief
+npm install -g brief-ctx
 ```
 
 ## Usage

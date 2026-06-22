@@ -14,6 +14,8 @@ export const COMMAND_DESCRIPTION = "Generate or update a compact project archite
 
 const DEFAULT_OUTPUT = "PROJECT_CONTEXT.md";
 const CACHE_PATH = path.join(".pi", "brief.json");
+const TOOL_NAME = "brief-ctx";
+const TOOL_VERSION = "1.1.0";
 const MAX_READ_BYTES = 100 * 1024;
 const FILE_COUNT_CAP = 5000;
 const MAX_WALK_DEPTH = 8;
@@ -61,11 +63,17 @@ export type BriefResult = {
 };
 
 type PackageJson = {
+  name?: string;
+  version?: string;
   scripts?: Record<string, string>;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
+  bin?: string | Record<string, string>;
+  keywords?: string[];
+  files?: string[];
+  pi?: { extensions?: string[]; prompts?: string[]; image?: string; video?: string };
 };
 
 type SizeCategory = "tiny" | "small" | "medium" | "large";
@@ -81,6 +89,9 @@ type ProjectSummary = {
   size: SizeCategory;
   keyFiles: ScoredFile[];
   stack: {
+    projectType: string | null;
+    package: string | null;
+    piGallery: string | null;
     language: string | null;
     runtime: string | null;
     packageManager: string | null;
@@ -96,9 +107,17 @@ type ProjectSummary = {
     lint: string | null;
     test: string | null;
     database: string | null;
+    packageCheck: string | null;
   };
   map: {
     entry: string | null;
+    core: string | null;
+    cli: string | null;
+    piExtension: string | null;
+    prompts: string | null;
+    adapters: string | null;
+    tests: string | null;
+    types: string | null;
     routesPages: string | null;
     apiServer: string | null;
     components: string | null;
@@ -109,6 +128,7 @@ type ProjectSummary = {
   risks: Array<{ label: string; detail: string }>;
   conventions: Record<string, string | null>;
   unknowns: string[];
+  changes: string[];
 };
 
 type DetectInputs = {
@@ -259,11 +279,14 @@ async function collectProjectInfo(cwd: string, options: BriefOptions): Promise<P
   const wranglerToml = await readTextIfExists(path.join(cwd, "wrangler.toml"));
   const inputs: DetectInputs = { cwd, files: topLevelFiles, dirs: topLevelDirs, packageJson, packageText, envExample, wranglerToml };
 
+  const previousCache = await readPreviousCache(cwd);
   const fileCount = await countTrackedFiles(cwd);
   const size = categorizeSize(fileCount);
   const stack = detectStack(inputs);
   const commands = detectCommands(packageJson, stack.packageManager);
   const map = detectMap(inputs);
+  const keyFiles = detectKeyFiles(inputs);
+  const risks = detectRisks(inputs);
 
   return {
     cwdName: path.basename(cwd),
@@ -272,13 +295,14 @@ async function collectProjectInfo(cwd: string, options: BriefOptions): Promise<P
     topLevelDirs,
     fileCount,
     size,
-    keyFiles: detectKeyFiles(inputs),
+    keyFiles,
     stack,
     commands,
     map,
-    risks: detectRisks(inputs),
+    risks,
     conventions: detectConventions(inputs),
     unknowns: collectUnknowns(stack, commands),
+    changes: collectChanges(previousCache, { size, fileCount, stack, commands, map, risks, keyFiles }),
   };
 }
 
@@ -349,6 +373,46 @@ async function readPackageJson(cwd: string): Promise<PackageJson | null> {
   }
 }
 
+async function readPreviousCache(cwd: string): Promise<Record<string, unknown> | null> {
+  const text = await readTextIfExists(path.join(cwd, CACHE_PATH));
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function collectChanges(previous: Record<string, unknown> | null, current: Pick<ProjectSummary, "size" | "fileCount" | "stack" | "commands" | "map" | "risks" | "keyFiles">): string[] {
+  if (!previous) return [];
+  const changes: string[] = [];
+  const previousStack = objectValue(previous.stack);
+  const previousCommands = objectValue(previous.commands);
+  const previousMap = objectValue(previous.map);
+  const previousRisks = arrayValue(previous.risks).join(", ");
+  const previousKeyFiles = arrayValue(previous.keyFiles).map((item) => objectValue(item).file).filter(Boolean).join(", ");
+  const currentRisks = current.risks.map((risk) => risk.label).join(", ");
+  const currentKeyFiles = current.keyFiles.map((item) => item.file).join(", ");
+
+  if (previous.size && previous.size !== current.size) changes.push(`Project size changed: ${previous.size} → ${current.size}.`);
+  if (previousStack.projectType !== current.stack.projectType) changes.push(`Project type changed: ${previousStack.projectType || "unknown"} → ${current.stack.projectType || "unknown"}.`);
+  if (previousStack.framework !== current.stack.framework) changes.push(`Framework changed: ${previousStack.framework || "unknown"} → ${current.stack.framework || "unknown"}.`);
+  if (previousStack.packageManager !== current.stack.packageManager) changes.push(`Package manager changed: ${previousStack.packageManager || "unknown"} → ${current.stack.packageManager || "unknown"}.`);
+  if (previousCommands.test !== current.commands.test || previousCommands.typecheck !== current.commands.typecheck || previousCommands.lint !== current.commands.lint) changes.push("Runnable checks changed; re-confirm validation commands before editing.");
+  if (previousMap.entry !== current.map.entry || previousMap.core !== current.map.core || previousMap.adapters !== current.map.adapters) changes.push("Project map changed; inspect updated key areas before editing.");
+  if (previousRisks !== currentRisks) changes.push(`Risk areas changed: ${previousRisks || "none"} → ${currentRisks || "none"}.`);
+  if (previousKeyFiles && previousKeyFiles !== currentKeyFiles) changes.push("Key files changed; review the Key Files section before editing.");
+  return changes.slice(0, 8);
+}
+
+function objectValue(value: unknown): Record<string, any> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : {};
+}
+
+function arrayValue(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
 function detectPackageManager(files: string[]): string | null {
   if (files.includes("pnpm-lock.yaml")) return "pnpm";
   if (files.includes("bun.lockb") || files.includes("bun.lock")) return "bun";
@@ -363,9 +427,15 @@ function detectStack(inputs: DetectInputs): ProjectSummary["stack"] {
   const files = new Set(inputs.files);
   const dirs = new Set(inputs.dirs);
   const frameworks: string[] = [];
+  const projectTypes: string[] = [];
   const db: string[] = [];
   const deployment: string[] = [];
   const runtime: string[] = [];
+
+  if (inputs.packageJson?.pi?.extensions || inputs.packageJson?.pi?.prompts || dirs.has("extensions") || dirs.has("prompts")) projectTypes.push("Pi package");
+  if (inputs.packageJson?.bin || files.has("cli.ts") || files.has("src/cli.ts")) projectTypes.push("CLI tool");
+  if (dirs.has("adapters")) projectTypes.push("multi-agent adapter package");
+  if (inputs.packageJson && projectTypes.length === 0 && !deps.has("next") && !deps.has("vite")) projectTypes.push("Node package");
 
   if (hasAnyFile(files, /^next\.config\./) || deps.has("next") || dirs.has("app") || dirs.has("pages")) frameworks.push("Next.js");
   if (files.has("app.json") || hasAnyFile(files, /^app\.config\./) || deps.has("expo") || deps.has("expo-router")) frameworks.push("Expo");
@@ -391,6 +461,9 @@ function detectStack(inputs: DetectInputs): ProjectSummary["stack"] {
   if (dirs.has(".github")) deployment.push("GitHub Actions");
 
   return {
+    projectType: joinOrNull(projectTypes),
+    package: detectPackageIdentity(inputs.packageJson),
+    piGallery: detectPiGallery(inputs.packageJson),
     language: detectLanguage(inputs.files, deps),
     runtime: joinOrNull(runtime),
     packageManager: detectPackageManager(inputs.files),
@@ -423,20 +496,29 @@ function detectCommands(packageJson: PackageJson | null, packageManager: string 
     lint: script("lint"),
     test: script("test"),
     database: dbScript ? `${run} ${dbScript}` : null,
+    packageCheck: packageJson ? "npm pack --dry-run" : null,
   };
 }
 
 function detectMap(inputs: DetectInputs): ProjectSummary["map"] {
   const dirs = new Set(inputs.dirs);
   const files = new Set(inputs.files);
+  const hasSrcCli = dirs.has("src") && /"bin"\s*:/.test(inputs.packageText || "");
   return {
     entry: firstPresent([...inputs.files, ...inputs.dirs], ["src", "app", "pages", "index.ts", "index.js", "main.ts", "worker.ts"]),
+    core: dirs.has("src") ? "src/" : null,
+    cli: inputs.packageJson?.bin ? "package bin" : hasSrcCli ? "src/cli.ts" : null,
+    piExtension: dirs.has("extensions") ? "extensions/" : null,
+    prompts: dirs.has("prompts") ? "prompts/" : null,
+    adapters: dirs.has("adapters") ? "adapters/" : null,
+    tests: dirs.has("test") || dirs.has("tests") ? presentDirs(dirs, ["test", "tests"]) : null,
+    types: dirs.has("types") ? "types/" : null,
     routesPages: presentDirs(dirs, ["app", "pages", "routes"]),
     apiServer: presentDirs(dirs, ["server", "api"]) || (files.has("worker.ts") ? "worker.ts" : null),
     components: presentDirs(dirs, ["components", "ui"]),
     logic: presentDirs(dirs, ["lib", "services", "features", "domain"]),
     data: presentDirs(dirs, ["db", "prisma", "supabase", "data"]),
-    configDeploy: presentFiles(files, ["wrangler.toml", "Dockerfile", "docker-compose.yml", "vercel.json"]),
+    configDeploy: presentFiles(files, ["wrangler.toml", "Dockerfile", "docker-compose.yml", "vercel.json"]) || (dirs.has(".github") ? ".github/" : null),
   };
 }
 
@@ -461,13 +543,21 @@ function detectKeyFiles(inputs: DetectInputs): ScoredFile[] {
     scored.push({ file, note: "framework/tool configuration", score: 8 });
   }
   addFile(".env.example", "documented env vars (safe example only)", 7);
+  addDir("extensions", "Pi extension entrypoints", 7);
+  addDir("prompts", "packaged prompt templates", 7);
+  addDir("adapters", "cross-agent integrations", 7);
   addDir("prisma", "database schema/migrations", 7);
+  addFile("CHANGELOG.md", "release notes", 6);
+  addFile("preview.jpg", "Pi gallery preview asset", 6);
   addFile("docker-compose.yml", "local services/deployment", 6);
   addFile("Dockerfile", "container build", 6);
   addFile("vercel.json", "deployment configuration", 6);
   addDir("supabase", "database/backend platform", 6);
   // Medium value: source layout.
   for (const dir of ["src", "app", "pages", "components", "lib", "server", "db"]) addDir(dir, "important project area", 5);
+  addDir("test", "behavior coverage", 5);
+  addDir("tests", "behavior coverage", 5);
+  addDir("types", "ambient type shims", 5);
   addFile("tsconfig.json", "TypeScript configuration", 4);
   addDir(".github", "CI/CD workflows", 4);
 
@@ -483,7 +573,7 @@ function detectRisks(inputs: DetectInputs): Array<{ label: string; detail: strin
   const files = new Set(inputs.files);
   const risks: Array<{ label: string; detail: string }> = [];
 
-  if (/auth|session|jwt|oauth|clerk|next-auth|better-auth|lucia/.test(text)) {
+  if (hasAuthSignal(deps, inputs.envExample || "", inputs.files, inputs.dirs)) {
     risks.push({ label: "Auth", detail: "auth/session code present; require approval before changing" });
   }
   if (/stripe|payment|billing|checkout|invoice/.test(text)) {
@@ -494,6 +584,9 @@ function detectRisks(inputs: DetectInputs): Array<{ label: string; detail: strin
   }
   if (files.has(".env.example")) {
     risks.push({ label: "Secrets", detail: "env shape exists; never read real .env files" });
+  }
+  if (inputs.packageJson?.keywords?.includes("pi-package") || inputs.packageJson?.files || inputs.packageJson?.pi) {
+    risks.push({ label: "Package publishing", detail: "npm metadata, files whitelist, and Pi gallery fields affect install/listing" });
   }
   if (files.has("wrangler.toml") || files.has("Dockerfile") || files.has("docker-compose.yml") || dirs.has(".github")) {
     risks.push({ label: "Deployment", detail: "deployment/infra config present" });
@@ -519,7 +612,7 @@ function detectConventions(inputs: DetectInputs): ProjectSummary["conventions"] 
 
 function collectUnknowns(stack: ProjectSummary["stack"], commands: ProjectSummary["commands"]): string[] {
   const unknowns: string[] = [];
-  if (!stack.framework) unknowns.push("No framework detected; inspect the project tree to confirm.");
+  if (!stack.framework && !stack.projectType) unknowns.push("No framework or project type detected; inspect the project tree to confirm.");
   if (!stack.database) unknowns.push("No database/ORM signal detected.");
   if (!stack.deployment) unknowns.push("Deployment target unclear.");
   if (!commands.test) unknowns.push("No test command detected.");
@@ -537,7 +630,7 @@ function renderCompact(summary: ProjectSummary): string {
   const lines: string[] = [
     "# Project Context",
     "",
-    "Generated by `/brief` (compact). Run `/brief --full` for a broader brief. Re-run `/brief` whenever architecture gets stale.",
+    `Generated by \`${TOOL_NAME}\` via \`/brief\` (compact). Package version: ${TOOL_VERSION}. Run \`/brief --full\` for a broader brief. Re-run \`/brief\` whenever architecture gets stale.`,
     "",
     "## Stack",
     ...stackLines(summary.stack, summary.size, summary.fileCount),
@@ -553,7 +646,14 @@ function renderCompact(summary: ProjectSummary): string {
     "",
     "## Risks",
     ...riskLines(summary.risks),
+    "",
+    "## Agent Switching",
+    ...agentSwitchingLines(summary),
   ];
+
+  if (summary.changes.length > 0) {
+    lines.push("", "## Changed Since Last Brief", ...summary.changes.map((item) => `- ${item}`));
+  }
 
   if (summary.unknowns.length > 0) {
     lines.push("", "## Unknowns", ...summary.unknowns.map((item) => `- ${item}`));
@@ -578,7 +678,7 @@ function renderFull(summary: ProjectSummary): string {
   const lines: string[] = [
     "# Project Context",
     "",
-    "Generated by `/brief --full`. Re-run `/brief` whenever architecture gets stale.",
+    `Generated by \`${TOOL_NAME}\` via \`/brief --full\`. Package version: ${TOOL_VERSION}. Re-run \`/brief\` whenever architecture gets stale.`,
     "",
     "## Stack",
     ...stackLines(summary.stack, summary.size, summary.fileCount),
@@ -599,9 +699,16 @@ function renderFull(summary: ProjectSummary): string {
     "## Risks",
     ...riskLines(summary.risks),
     "",
+    "## Agent Switching",
+    ...agentSwitchingLines(summary),
+    "",
     "## Conventions",
     ...conventionLines(summary.conventions),
   ];
+
+  if (summary.changes.length > 0) {
+    lines.push("", "## Changed Since Last Brief", ...summary.changes.map((item) => `- ${item}`));
+  }
 
   if (summary.unknowns.length > 0) {
     lines.push("", "## Unknowns", ...summary.unknowns.map((item) => `- ${item}`));
@@ -622,8 +729,36 @@ function renderFull(summary: ProjectSummary): string {
   return `${lines.join("\n")}\n`;
 }
 
+function detectPackageIdentity(packageJson: PackageJson | null): string | null {
+  if (!packageJson?.name) return null;
+  return packageJson.version ? `${packageJson.name}@${packageJson.version}` : packageJson.name;
+}
+
+function detectPiGallery(packageJson: PackageJson | null): string | null {
+  if (!packageJson) return null;
+  const signals: string[] = [];
+  if (packageJson.keywords?.includes("pi-package")) signals.push("pi-package keyword");
+  if (packageJson.pi?.image) signals.push("preview image configured");
+  if (packageJson.pi?.video) signals.push("preview video configured");
+  if (packageJson.pi?.extensions?.length) signals.push("extensions manifest");
+  if (packageJson.pi?.prompts?.length) signals.push("prompts manifest");
+  return joinOrNull(signals);
+}
+
+function hasAuthSignal(deps: Set<string>, envExample: string, files: string[], dirs: string[]): boolean {
+  const authDeps = ["next-auth", "better-auth", "lucia", "@clerk/nextjs", "@clerk/clerk-js"];
+  if (authDeps.some((dep) => deps.has(dep))) return true;
+  if (/(^|\n)\s*(AUTH|SESSION|JWT|OAUTH|CLERK)_/i.test(envExample)) return true;
+  if (dirs.some((dir) => /^(auth|session|sessions)$/i.test(dir))) return true;
+  if (files.some((file) => /^(middleware|auth|session)\.(ts|tsx|js|jsx)$/i.test(file))) return true;
+  return false;
+}
+
 function stackLines(stack: ProjectSummary["stack"], size: SizeCategory, fileCount: number): string[] {
   const lines: string[] = [];
+  pushIf(lines, "Project type", stack.projectType);
+  pushIf(lines, "Package", stack.package);
+  pushIf(lines, "Pi gallery", stack.piGallery);
   pushIf(lines, "Language", stack.language);
   pushIf(lines, "Runtime", stack.runtime);
   pushIf(lines, "Package manager", stack.packageManager);
@@ -644,12 +779,20 @@ function commandLines(commands: ProjectSummary["commands"]): string[] {
   pushIf(lines, "Lint", commands.lint);
   pushIf(lines, "Test", commands.test);
   pushIf(lines, "DB/migrations", commands.database);
+  pushIf(lines, "Package check", commands.packageCheck);
   return lines.length > 0 ? lines : ["- No runnable scripts detected."];
 }
 
 function mapLines(map: ProjectSummary["map"]): string[] {
   const lines: string[] = [];
   pushIf(lines, "Entry", map.entry);
+  pushIf(lines, "Core", map.core);
+  pushIf(lines, "CLI", map.cli);
+  pushIf(lines, "Pi extension", map.piExtension);
+  pushIf(lines, "Prompts", map.prompts);
+  pushIf(lines, "Agent adapters", map.adapters);
+  pushIf(lines, "Tests", map.tests);
+  pushIf(lines, "Types", map.types);
   pushIf(lines, "Routes/pages", map.routesPages);
   pushIf(lines, "API/server", map.apiServer);
   pushIf(lines, "UI/components", map.components);
@@ -667,6 +810,17 @@ function keyFileLines(keyFiles: ScoredFile[]): string[] {
 function riskLines(risks: Array<{ label: string; detail: string }>): string[] {
   if (risks.length === 0) return ["- No high-risk areas detected; still inspect relevant files before editing."];
   return risks.map((risk) => `- ${risk.label}: ${risk.detail}`);
+}
+
+function agentSwitchingLines(summary: ProjectSummary): string[] {
+  const hosts = ["Pi", "CLI"];
+  if (summary.map.adapters) hosts.push("Claude Code", "Codex");
+  return [
+    "- Shared context file: PROJECT_CONTEXT.md",
+    "- Refresh command: /brief or `brief-ctx brief`",
+    `- Works in: ${[...new Set(hosts)].join(", ")}`,
+    "- Rule: refresh before switching agents after architecture changes.",
+  ];
 }
 
 function conventionLines(conventions: ProjectSummary["conventions"]): string[] {
@@ -687,8 +841,7 @@ function ruleLines(): string[] {
 }
 
 function taskLensLines(summary: ProjectSummary): string[] {
-  const areas = [summary.map.routesPages, summary.map.components, summary.map.apiServer, summary.map.data]
-    .filter((value): value is string => Boolean(value));
+  const areas = taskLikelyAreas(summary);
   const riskLabels = summary.risks.map((risk) => risk.label.toLowerCase());
   return [
     "## Task Lens",
@@ -697,6 +850,20 @@ function taskLensLines(summary: ProjectSummary): string[] {
     `- Risks: ${riskLabels.length > 0 ? riskLabels.join(", ") : "none detected, but verify before editing"}`,
     "- First step: inspect existing patterns in the likely areas before editing.",
   ];
+}
+
+function taskLikelyAreas(summary: ProjectSummary): string[] {
+  const task = (summary.task || "").toLowerCase();
+  const areas = new Set<string>();
+  const add = (...values: Array<string | null>) => values.filter(Boolean).forEach((value) => areas.add(value!));
+  if (/pi|extension|\/brief/.test(task)) add("extensions/brief.ts", "src/core.ts");
+  if (/cli|npx|bin|terminal/.test(task)) add("src/cli.ts", "package.json", "test/cli.test.ts");
+  if (/claude/.test(task)) add("adapters/claude-code/");
+  if (/codex/.test(task)) add("adapters/codex/");
+  if (/npm|publish|package|gallery|preview|install/.test(task)) add("package.json", "README.md", "docs/production-readiness.md");
+  if (/scanner|detect|risk|map|brief|context/.test(task)) add("src/core.ts", "test/brief.test.ts");
+  if (areas.size === 0) add(summary.map.routesPages, summary.map.components, summary.map.apiServer, summary.map.data, summary.map.core);
+  return [...areas];
 }
 
 async function writeCache(cwd: string, summary: ProjectSummary): Promise<void> {
@@ -712,6 +879,8 @@ async function writeCache(cwd: string, summary: ProjectSummary): Promise<void> {
     risks: summary.risks.map((risk) => risk.label),
     keyFiles: summary.keyFiles.map(({ file, score }) => ({ file, score })),
     unknowns: summary.unknowns,
+    changes: summary.changes,
+    generatedBy: { name: TOOL_NAME, version: TOOL_VERSION },
   };
   try {
     await mkdir(path.dirname(cachePath), { recursive: true });

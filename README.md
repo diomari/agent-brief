@@ -1,12 +1,32 @@
-# agent-brief
+# Brief Context
 
-**A tiny, reusable project briefing layer for AI coding agents.**
+**The missing handoff tool for AI coding agents.**
 
-Repository: <https://github.com/diomari/agent-brief>
+Do not start another AI coding session cold.
 
-`agent-brief` gives Pi, Claude Code, Codex, and terminal workflows the same `/brief` command. It scans a repository, writes a compact `PROJECT_CONTEXT.md`, and sends the agent a kickoff prompt that says: read the brief first, understand the architecture, identify risk areas, then plan before editing.
+Brief gives coding agents the project context they need before they touch the codebase. It creates and maintains a lean, refreshable handoff document that explains what the project is, how it works, what recently changed, and what the next agent needs to know.
 
-It is not another memory database, vector index, or agent framework. It is the missing lightweight handoff file between a changing codebase and whichever coding agent you open next.
+It is not a repo dump.  
+It is not another bloated `AGENTS.md`.  
+It is not a conversation summary.
+
+It is the missing project handoff layer between AI coding sessions.
+
+```txt
+/brief
+```
+
+Run it before a new session.  
+Run it after major changes.  
+Run it before handing work from one agent to another.
+
+---
+
+**Package:** `brief-ctx`  
+**Repository:** <https://github.com/diomari/brief-ctx>  
+**Output:** `PROJECT_CONTEXT.md`
+
+`brief-ctx` gives Pi, Claude Code, Codex, Cursor/Windsurf-style rule files, and terminal workflows a shared briefing layer. In Pi, Claude Code, and Codex it exposes `/brief`; everywhere else it can run as `brief-ctx brief` or export small rules that tell the next agent to read the generated handoff first.
 
 ## Why this exists
 
@@ -18,11 +38,11 @@ AI coding agents are most useful after they understand a project’s shape: stac
 - agent-specific memories that do not travel across tools
 - full repo scans that waste context and can overfit to irrelevant files
 
-`agent-brief` creates a **small, factual, generated project map** that any agent can read before doing work.
+`brief-ctx` creates a **small, factual, generated project map** that any agent can read before doing work.
 
 ## What makes it useful
 
-- **Agent-neutral:** one core powers Pi, Claude Code, Codex, and the CLI.
+- **Agent-neutral:** one core powers Pi, Claude Code, Codex, and the CLI; export helpers cover Cursor/Windsurf-style rule files.
 - **Lean by default:** compact output targets roughly 50–80 lines, not a giant audit.
 - **Idempotent:** re-run `/brief` as the project evolves; it updates `PROJECT_CONTEXT.md` in place.
 - **Safe:** skips secrets, generated folders, large files, `.git`, `node_modules`, build output, and real `.env` files.
@@ -32,9 +52,9 @@ AI coding agents are most useful after they understand a project’s shape: stac
 
 ## Who it is for
 
-`agent-brief` is designed for:
+`brief-ctx` is designed for:
 
-- developers who switch between Pi, Claude Code, Codex, and terminal agents
+- developers who switch between Pi, Claude Code, Codex, Cursor, Windsurf, and terminal agents
 - maintainers who want every agent session to start with the same project context
 - teams with fast-moving architecture where hand-written agent files get stale
 - consultants or freelancers opening unfamiliar repos repeatedly
@@ -45,7 +65,7 @@ It is especially useful when a repo is too large to dump into chat, but not larg
 
 ## How it compares
 
-| Approach | Strength | Limitation | Where `agent-brief` fits |
+| Approach | Strength | Limitation | Where `brief-ctx` fits |
 | --- | --- | --- | --- |
 | `README.md` | Great human-facing docs | Often product/setup focused; may omit agent risks and commands | Generates an agent-facing operational map |
 | `AGENTS.md` | Good persistent agent instructions | Manual, easy to forget, often repo-specific prose | Generates fresh architecture facts; can complement `AGENTS.md` |
@@ -55,7 +75,7 @@ It is especially useful when a repo is too large to dump into chat, but not larg
 | Full repo indexing / RAG | Powerful for search-heavy repos | More moving parts, more cost, more stale index risk | Keeps a tiny generated summary for first orientation |
 | Prompt-only templates | Easy to install | Cannot reliably inspect files or write/update context | Actually scans and writes `PROJECT_CONTEXT.md` |
 
-`agent-brief` is intentionally smaller than an agent framework and more automated than a hand-written instruction file.
+`brief-ctx` is intentionally smaller than an agent framework and more automated than a hand-written instruction file.
 
 ## Install
 
@@ -67,15 +87,34 @@ From this package directory:
 pi install -l .
 ```
 
+Or install the published package:
+
+```bash
+pi install npm:brief-ctx
+```
+
 Or run the extension directly while developing:
 
 ```bash
 pi -e ./extensions/brief.ts
 ```
 
+> **Local tarball note:** do not pass `brief-ctx-*.tgz` directly to `pi install` or `pi -e`.
+> Pi treats local file paths as single extension files, so a `.tgz` path fails with
+> “Unknown file extension .tgz”. For local testing, install the package directory (`pi install -l .`)
+> or extract the tarball and install the extracted directory:
+>
+> ```bash
+> npm pack
+> rm -rf /tmp/brief-ctx-pack
+> mkdir -p /tmp/brief-ctx-pack
+> tar -xzf brief-ctx-*.tgz -C /tmp/brief-ctx-pack --strip-components=1
+> pi install -l /tmp/brief-ctx-pack
+> ```
+
 ### Claude Code
 
-Install the plugin in `adapters/claude-code/` (see its README). It exposes `/brief`, which shells out to the `agent-brief` CLI.
+Install the plugin in `adapters/claude-code/` (see its README). It exposes `/brief`, which shells out to the `brief-ctx` CLI.
 
 ### Codex
 
@@ -84,15 +123,39 @@ Copy `adapters/codex/prompts/brief.md` into `~/.codex/prompts/` (see its README)
 ### CLI: any agent or terminal
 
 ```bash
-npx --yes agent-brief brief
-npx --yes agent-brief brief --full
+npx --yes brief-ctx brief
+npx --yes brief-ctx brief --full
 
 # or install globally
-npm install -g agent-brief
-agent-brief brief
+npm install -g brief-ctx
+brief-ctx brief
 ```
 
 The CLI is the shared entrypoint used by the Claude Code and Codex adapters. Status goes to stderr; the kickoff prompt goes to stdout so agents can capture it. Requires Node 22.6+.
+
+## Agent switching install/export helpers
+
+`brief-ctx` can print setup instructions for each host so the same `PROJECT_CONTEXT.md` travels across tools:
+
+```bash
+brief-ctx install pi
+brief-ctx install claude-code
+brief-ctx install codex
+brief-ctx install cursor
+brief-ctx install windsurf
+brief-ctx install all
+```
+
+It can also export tiny rule/prompt snippets for agents that do not install executable slash commands:
+
+```bash
+brief-ctx export agents-md > AGENTS.md
+brief-ctx export cursor > .cursor/rules/brief-ctx.md
+brief-ctx export windsurf > .windsurfrules
+brief-ctx export prompt
+```
+
+The generated snippets point agents to `PROJECT_CONTEXT.md` instead of duplicating context.
 
 ## Usage
 
@@ -111,11 +174,12 @@ The CLI is the shared entrypoint used by the Claude Code and Codex adapters. Sta
 
 By default, `/brief` writes a compact `PROJECT_CONTEXT.md` in the current project. It summarizes:
 
-- stack: language, runtime, package manager, framework, database/ORM, deployment, and project size
-- commands: install, dev, build, typecheck, lint, test, and database scripts when detected
-- map: entry points, routes, API/server, components, logic, data, and config/deploy areas
+- stack: project type, package identity, Pi gallery metadata, language, runtime, package manager, framework, database/ORM, deployment, and project size
+- commands: install, dev, build, typecheck, lint, test, database scripts, and package validation when detected
+- map: entry points, core source, CLI, Pi extensions, prompts, adapters, tests, types, routes, API/server, components, logic, data, and config/deploy areas
 - key files ranked by relevance
-- risk areas such as auth, billing, migrations, secrets, deployment, and jobs
+- risk areas such as auth, billing, migrations, secrets, package publishing, deployment, and jobs
+- an Agent Switching section so the next tool knows how to refresh and reuse `PROJECT_CONTEXT.md`
 - grouped unknowns instead of repeated “Not detected” lines
 - safe editing rules and a short fresh-session prompt
 
@@ -123,7 +187,7 @@ It also writes `.pi/brief.json`, a machine-readable cache with stable detection 
 
 ## How the scanner finds high-signal files
 
-`agent-brief` is intentionally selective. It does **not** recursively read your whole source tree or paste code into the brief. Instead, it combines a shallow project inventory with a small set of safe metadata reads and scoring rules.
+`brief-ctx` is intentionally selective. It does **not** recursively read your whole source tree or paste code into the brief. Instead, it combines a shallow project inventory with a small set of safe metadata reads and scoring rules.
 
 ### 1. Start with top-level project shape
 
@@ -134,6 +198,7 @@ The scanner reads the project root and records top-level files and directories. 
 - framework config: `next.config.*`, `vite.config.*`, `astro.config.*`, `app.config.*`
 - deployment config: `wrangler.toml`, `Dockerfile`, `docker-compose.yml`, `vercel.json`
 - common app folders: `src/`, `app/`, `pages/`, `routes/`, `server/`, `api/`, `components/`, `lib/`, `db/`, `prisma/`, `supabase/`
+- package/tool folders: `extensions/`, `prompts/`, `adapters/`, `test/`, `types/`
 - agent/human docs: `README.md`, `AGENTS.md`, `CLAUDE.md`
 
 Top-level shape is usually enough to orient an agent without spending tokens on every file.
@@ -150,7 +215,7 @@ Real `.env` files are skipped entirely. Files over the read cap are ignored. Sou
 
 ### 3. Count source/config files without reading them
 
-To estimate project size, `agent-brief` walks countable source/config extensions and skips noisy or unsafe directories. This gives categories like `tiny`, `small`, `medium`, or `large`, which controls how aggressively the brief summarizes.
+To estimate project size, `brief-ctx` walks countable source/config extensions and skips noisy or unsafe directories. This gives categories like `tiny`, `small`, `medium`, or `large`, which controls how aggressively the brief summarizes.
 
 Skipped directories include:
 
@@ -173,6 +238,9 @@ Detection is based on concrete signals, for example:
 - `prisma/`, `prisma`, or `@prisma/client` → Prisma
 - `drizzle.config.*` or `drizzle-orm` → Drizzle
 - `DATABASE_URL` in `.env.example` → database signal, without reading secrets
+- `pi-package`, `pi.image`, `pi.extensions`, or `pi.prompts` in `package.json` → Pi package/gallery signals
+- `bin` in `package.json` → CLI tool signal
+- `adapters/` → multi-agent adapter package signal
 - scripts like `test`, `lint`, `typecheck`, `db:migrate` → runnable commands
 
 If a signal is not present, the brief uses `Unknowns` instead of inventing architecture.
@@ -190,6 +258,8 @@ Examples of scoring priorities:
 - `.env.example` — safe env contract
 - `prisma/`, `supabase/`, `db/` — data layer
 - `Dockerfile`, `docker-compose.yml`, `wrangler.toml`, `vercel.json` — deploy/runtime risk
+- `extensions/`, `prompts/`, `adapters/` — agent package integration points
+- `test/`, `types/`, `CHANGELOG.md`, `preview.jpg` — validation, shims, release notes, and gallery assets
 - `src/`, `app/`, `components/`, `lib/`, `server/` — implementation map
 
 Lockfiles are intentionally not listed as key files because package-manager detection already captures their useful signal.
@@ -201,7 +271,7 @@ A compact generated `PROJECT_CONTEXT.md` looks like this:
 ```md
 # Project Context
 
-Generated by `/brief` (compact). Run `/brief --full` for a broader brief. Re-run `/brief` whenever architecture gets stale.
+Generated by `brief-ctx` via `/brief` (compact). Package version: 1.1.0. Run `/brief --full` for a broader brief. Re-run `/brief` whenever architecture gets stale.
 
 ## Stack
 - Language: TypeScript
@@ -220,6 +290,7 @@ Generated by `/brief` (compact). Run `/brief --full` for a broader brief. Re-run
 - Lint: pnpm lint
 - Test: pnpm test
 - DB/migrations: pnpm db:migrate
+- Package check: npm pack --dry-run
 
 ## Map
 - Entry: `app/`
@@ -245,6 +316,15 @@ Generated by `/brief` (compact). Run `/brief --full` for a broader brief. Re-run
 - Database: schema/migration files present; avoid unsafe migration edits
 - Secrets: env shape exists; never read real .env files
 - Deployment: deployment config present; confirm before changing runtime settings
+
+## Agent Switching
+- Shared context file: PROJECT_CONTEXT.md
+- Refresh command: /brief or `brief-ctx brief`
+- Works in: Pi, CLI, Claude Code, Codex
+- Rule: refresh before switching agents after architecture changes.
+
+## Changed Since Last Brief
+- Runnable checks changed; re-confirm validation commands before editing.
 
 ## Unknowns
 - No dedicated background job signal detected.
@@ -302,22 +382,30 @@ This adds a short `Task Lens` section with likely areas, risks, and a first insp
 
 Use this when onboarding to a larger repo or when you explicitly want more layout and convention detail.
 
-### 5. Keep generated and human-authored guidance separate
+### 5. Switch agents without losing orientation
+
+```txt
+/brief
+```
+
+Then open another agent and ask it to read `PROJECT_CONTEXT.md` first. The generated `Agent Switching` section reminds each tool that `PROJECT_CONTEXT.md` is the shared context file and that `/brief` or `brief-ctx brief` refreshes it.
+
+### 6. Keep generated and human-authored guidance separate
 
 A good setup is:
 
 - `README.md` — human product/setup documentation
 - `AGENTS.md` or `CLAUDE.md` — durable team rules and preferences
-- `PROJECT_CONTEXT.md` — generated architecture brief from `agent-brief`
+- `PROJECT_CONTEXT.md` — generated architecture brief from `brief-ctx`
 
 This separation keeps the generated file safe to refresh while preserving human-authored policy.
 
 ## Lean architecture
 
-`agent-brief` has a deliberately small architecture:
+`brief-ctx` has a deliberately small architecture:
 
 - `src/core.ts` — host-agnostic detection, rendering, cache writing, and `brief()` orchestration
-- `src/cli.ts` — CLI entrypoint (`agent-brief`)
+- `src/cli.ts` — CLI entrypoint (`brief-ctx`)
 - `extensions/brief.ts` — Pi adapter, a thin wrapper over the core
 - `adapters/claude-code/` — Claude Code slash command that shells out to the CLI
 - `adapters/codex/` — Codex prompt that shells out to the CLI
@@ -327,7 +415,7 @@ The adapters do not duplicate detection logic. Every host produces the same `PRO
 
 ## Safety model
 
-`agent-brief` is conservative by design:
+`brief-ctx` is conservative by design:
 
 - never reads real `.env` files
 - reads only small, known-safe metadata/config files
@@ -339,7 +427,7 @@ The adapters do not duplicate detection logic. Every host produces the same `PRO
 
 ## Non-goals
 
-`agent-brief` does not try to be:
+`brief-ctx` does not try to be:
 
 - a vector database
 - a semantic code search engine

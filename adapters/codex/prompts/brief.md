@@ -4,7 +4,7 @@ Generate or update a compact project brief, then use it as working context.
    (for example `--full`, `--task "..."`, `--update`, `--dry-run`, `--output PATH`):
 
    ```bash
-   npx --yes agent-brief brief $ARGUMENTS
+   npx --yes brief-ctx brief $ARGUMENTS
    ```
 
 2. Unless `--dry-run` was used, the command wrote or updated `PROJECT_CONTEXT.md`. Read that file.

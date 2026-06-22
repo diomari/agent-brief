@@ -1,19 +1,19 @@
 {
-  "name": "agent-brief",
+  "name": "brief-ctx",
   "version": "1.1.0",
   "description": "Adds /brief for generating and updating AI coding agent project context. Works with Pi, Claude Code, and Codex.",
   "type": "module",
   "author": "Diomari Madulara",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/diomari/agent-brief.git"
+    "url": "git+https://github.com/diomari/brief-ctx.git"
   },
-  "homepage": "https://github.com/diomari/agent-brief#readme",
+  "homepage": "https://github.com/diomari/brief-ctx#readme",
   "bugs": {
-    "url": "https://github.com/diomari/agent-brief/issues"
+    "url": "https://github.com/diomari/brief-ctx/issues"
   },
   "bin": {
-    "agent-brief": "./src/cli.ts"
+    "brief-ctx": "./src/cli.ts"
   },
   "engines": {
     "node": ">=22.6.0"
@@ -32,6 +32,7 @@
     "extensions",
     "prompts",
     "adapters",
+    "preview.jpg",
     "README.md",
     "LICENSE"
   ],
@@ -41,7 +42,8 @@
   },
   "pi": {
     "extensions": ["./extensions"],
-    "prompts": ["./prompts"]
+    "prompts": ["./prompts"],
+    "image": "./preview.jpg"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"

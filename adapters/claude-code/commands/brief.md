@@ -6,7 +6,7 @@ allowed-tools: Bash(npx:*), Read
 
 Generate or update the project brief by running the generator:
 
-!`npx --yes agent-brief brief $ARGUMENTS`
+!`npx --yes brief-ctx brief $ARGUMENTS`
 
 The command above scanned the project and — unless `--dry-run` was passed — wrote or updated
 `PROJECT_CONTEXT.md`. Its stdout above is a kickoff prompt.
