@@ -1,0 +1,37 @@
+{
+  "name": "pi-agent-brief",
+  "version": "1.0.0",
+  "description": "A Pi package that adds /onboard for generating AI coding agent project context.",
+  "type": "module",
+  "author": "Diomari Madulara",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "coding-agent",
+    "ai-coding",
+    "agent-context",
+    "repo-map"
+  ],
+  "license": "MIT",
+  "files": [
+    "extensions",
+    "prompts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test"
+  },
+  "pi": {
+    "extensions": ["./extensions"],
+    "prompts": ["./prompts"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest"
+  }
+}

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      # No lockfile and no runtime deps; install only the devDeps needed for
+      # typecheck (typescript, @types/node). The Pi peer dep is shimmed via
+      # types/pi-coding-agent.d.ts, so it is not installed here.
+      - name: Install dev dependencies
+        run: npm install --no-save typescript @types/node
+
+      - name: Typecheck
+        run: npx tsc -p tsconfig.json
+
+      - name: Test
+        run: node --test
+
+      - name: Verify publish contents
+        run: npm pack --dry-run
